@@ -48,6 +48,14 @@ class SessionsController extends Controller
         return redirect('/');  
     }
 
+    /* Response Methods */
+    protected function respondCreated($message)
+    {
+        flash(trans('auth.sessions.info_welcome', ['name' => auth()->user()->name]));
+
+        return ($return = request('return'))? redirect(urldecode($return)) : redirect()->intended('home');
+    }
+
     protected function respondError($message)
     {
         flash()->error($message);

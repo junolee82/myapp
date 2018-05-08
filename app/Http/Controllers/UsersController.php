@@ -18,9 +18,7 @@ class UsersController extends Controller
 
     public function store(Request $request)
     {
-        $socialUser = \App\User::whereEmail($request->input('email'))->whereNull('password')->first();
-
-        if ($socialUser) {
+        if ($socialUser = \App\User::socialUser($request->get('email'))->first()) {
             return $this->updateSocialAccount($request, $socialUser);
         }
 
@@ -28,11 +26,11 @@ class UsersController extends Controller
     }
 
     // 소셜 로그인
-    protected function updateSocialAccount(Request $request, \App\User $user)
+    protected function updateSocialAccount(Request $request, User $user)
     {
-        $this->validate($reqeust, [
+        $this->validate($request, [
             'name' => 'required|max:255',
-            'email' => 'required|email|max:255', 
+            'email' => 'required|email|max:255',
             'password' => 'required|confirmed|min:6',
         ]);
 

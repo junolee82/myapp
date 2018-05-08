@@ -11,7 +11,7 @@ class SocialController extends Controller
         $this->middleware('guest');
     }
 
-    public function execute(Request $reqeust, $provider)
+    public function execute(Request $request, $provider)
     {
         if (! $request->has('code')) {
             return $this->redirectToProvider($provider);
@@ -27,7 +27,9 @@ class SocialController extends Controller
 
     protected function handleProviderCallback($provider)
     {
-        $user = \Socialite::driver($provider)->user();
+        $user = \Socialite::driver($provider)->stateless()->user();
+
+        // dd($user);
 
         $user = (\App\User::whereEmail($user->getEmail())->first()) ?: \App\User::create([
             'name' => $user->getName() ?: 'unknown',

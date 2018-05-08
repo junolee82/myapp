@@ -26,7 +26,7 @@
         </li>
         &nbsp;<li {!! str_contains(request()->path(), ['tags', 'articles']) ? 'class="active"' : '' !!}>
            <a href="{{ route('articles.index') }}">
-             {{ trans('forum.title') }}
+              {{ trans('forum.title') }}
            </a>
         </li>
       </ul>
@@ -36,13 +36,13 @@
         <!-- Authentication Links -->
         @if (Auth::guest())
           <li>
-            <a href="{{ route('sessions.create') }}">
-              {{--  {{ trans('auth.sessions.title') }}  --}} 로그인
+            <a href="{{ route('sessions.create', ['return' => urlencode($currentUrl)]) }}">
+              {{ trans('auth.sessions.title') }}
             </a>
           </li>
           <li>
             <a href="{{ route('users.create') }}">
-              {{--  {{ trans('auth.users.title') }}  --}} 회원가입
+              {{ trans('auth.users.title') }}
             </a>
           </li>
         @else
@@ -54,7 +54,7 @@
             <ul class="dropdown-menu" role="menu">
               <li>
                 <a href="{{ route('sessions.destroy') }}">
-                  {{--  {{ trans('auth.sessions.destroy') }}  --}} 로그아웃
+                  {{ trans('auth.sessions.destroy') }}
                 </a>
               </li>
             </ul>

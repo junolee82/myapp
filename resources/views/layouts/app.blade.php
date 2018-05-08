@@ -40,7 +40,15 @@
   @yield('style')
 
   <!-- Scripts -->
-  
+  <script>
+    window.Laravel = <?php echo json_encode([
+      'csrfToken' => csrf_token(),
+      // 'currentUser' => $currentUser,
+      // 'currentRouteName' => $currentRouteName,
+      // 'currentLocale' => $currentLocale,
+      // 'currentUrl' => $currentUrl,
+    ]); ?>
+  </script>  
 </head>
 
 <body id="app-layout">

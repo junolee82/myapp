@@ -11,21 +11,21 @@
 
         <div class="page-header">
         <h4>
-            로그인
+            {{ trans('auth.sessions.title') }}
         </h4>
         <p class="text-muted">
             {{ trans('auth.sessions.description') }}
         </p>
         </div>
 
-        {{--  <div class="form-group">
+        <div class="form-group">
         <a class="btn btn-default btn-lg btn-block" href="{{ route('social.login', ['github']) }}">
             <strong>
             <i class="fa fa-github"></i>
-            {{ trans('auth.sessions.login_with_github') }}
+                {{ trans('auth.sessions.login_with_github') }}
             </strong>
         </a>
-        </div>  --}}
+        </div>
 
         <div class="login-or">
         <hr class="hr-or">
@@ -46,9 +46,9 @@
         <div class="checkbox">
             <label>
             <input type="checkbox" name="remember" value="{{ old('remember', 1) }}" checked>
-            로그인 기억하기
+                {{ trans('auth.sessions.remember') }}
             <span class="text-danger">
-                (공용 컴퓨터에서는 사용하지 마세요!)
+                {{ trans('auth.sessions.remember_help') }}
             </span>
             </label>
         </div>
@@ -61,15 +61,15 @@
         </div>
 
         <div>
-        <p class="text-center">회원이 아니라면?
-            <a href="{{ route('users.create') }}">가입하세요.</a>
+        <p class="text-center">
+            {!! trans('auth.sessions.ask_registration', ['url' => route('users.create')]) !!}
         </p>
         <p class="text-center">
-            <a href="{{ route('remind.create') }}">비밀번호를 잊으셨나요?.</a>
+            {!! trans('auth.sessions.ask_forgot', ['url' => route('remind.create')]) !!}
         </p>
         <p class="text-center">
             <small class="help-block">
-            {{  trans('auth.sessions.caveat_for_social') }}
+                {{  trans('auth.sessions.caveat_for_social') }}
             </small>
         </p>
         </div>

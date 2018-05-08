@@ -12,6 +12,7 @@ if (! function_exists('markdown')) {
     }
 }
 
+    // Gravatar 아바타 서비스
 if (! function_exists('gravatar_profile_url')) {
     /**
      * Generate gravatar profile page url.
@@ -39,6 +40,7 @@ if (! function_exists('gravatar_url')) {
     }
 }
 
+    // 파일 저장소
 if (! function_exists('attachments_path')) {
     /**
      * Generate attachments path.
@@ -76,6 +78,7 @@ if (! function_exists('format_filesize')) {
     }
 }
 
+    // 정렬 함수
 if (! function_exists('link_for_sort')) {
     /**
      * Build HTML anchor tag for sorting
@@ -116,6 +119,7 @@ if (! function_exists('link_for_sort')) {
     }
 }
 
+    // 캐시
 if (! function_exists('cache_key')) {
     /**
      * Generate key for caching.
@@ -148,6 +152,7 @@ if (! function_exists('taggable')) {
     }
 }
 
+    //
 if (! function_exists('current_url')) {
     /**
      * Build current url string, without return param.

@@ -12,7 +12,13 @@ class EventServiceProvider extends ServiceProvider
             App\Listeners\ArticlesEventListener::class,
         ],
         \illuminate\Auth\Events\Login::class => [
-            \App\Listeners\UsersEventListener::class
+            \App\Listeners\UsersEventListener::class,
+        ],
+        \App\Events\CommentsEvent::class => [
+            \App\Listeners\CommentsEventListener::class,
+        ],
+        \App\Events\ModelChanged::class => [
+            \App\Listeners\CacheHandler::class,
         ],
     ];
 

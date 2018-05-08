@@ -25,6 +25,8 @@ class HomeController extends Controller
     {
         flash('환영합니다.');
 
+       
+
         return view('home');
     }
 }

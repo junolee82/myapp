@@ -6,7 +6,11 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateArticlesTable extends Migration
 {   
-
+    // articles
+    // articles_tag
+    // tags
+    // users
+    // password_resets
     public function up()
     {
         Schema::create('articles', function (Blueprint $table) {

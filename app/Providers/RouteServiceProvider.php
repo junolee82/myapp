@@ -16,16 +16,17 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected $namespace = 'App\Http\Controllers';
 
-    /**
+    /** 라우트 모델 바인딩
      * Define your route model bindings, pattern filters, etc.
      *
      * @return void
      */
     public function boot()
     {
-        //
-
         parent::boot();
+
+        Route::model('article', \App\Article::class);
+        Route::model('comment', \App\Comment::class);
     }
 
     /**
@@ -65,8 +66,8 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes()
     {
-        Route::prefix('api')
-             ->middleware('api')
+        Route::/* prefix('api')
+             -> */middleware('api')
              ->namespace($this->namespace)
              ->group(base_path('routes/api.php'));
     }

@@ -3,77 +3,166 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use \Illuminate\Database\Eloquent\Collection;
+use \Illuminate\Http\Response;
 
 class ArticlesController extends Controller
-{
-    
-    public function index()
+{   
+    // 사용자 객체 접근 가능
+    public function __construct()
     {
-        //$articles = \App\Article::with('user')->get();
+        $this->middleware('auth', ['except' => ['index', 'show']]);
+    }
 
-        $articles = \App\Article::latest()->paginate(3);
+    public function cacheTags()
+    {
+        return 'articles';
+    }
 
-        // user() 관계가 필요 없는 다른 로직 수행
-        $articles->load('user');
+    // Article 컬렉션 조회
+    public function index(Request $request, $slug = null)
+    {
+        // $cacheKey = cache_key('articles.index');
 
-        return view('articles.index', compact('articles'));
+        $query = $slug
+            ?  \App\Tag::whereSlug($slug)->firstOrFail()->articles()
+            : new \App\Article;
+        
+        $query = $query->orderBy(
+            $request->input('sort', 'created_at'),
+            $request->input('order', 'desc')
+        );
+
+        if ($keyword = request()->input('q')) {
+            $raw = 'MATCH(title, content) AGAINST(? IN BOOLEAN MODE)';
+            $query = $query->whereRaw($raw, [$keyword]);
+        }
+
+        $articles = $query->paginate(5);
+        // $articles = $this->cache($cacheKey, 5, $query, 'paginate', 5);
+        
+        return $this->respondCollection($articles);
     }
     
+    // Article 컬렉션을 만들기 휘한 폼을 담은 뷰 반환
     public function create()
     {
-        return view('articles.create');
+        $article = new \App\Article;
+        
+        return view('articles.create', compact('article'));
     }
     
+    // 사용자의 입력한 폼 데이터로 새로운 Article 컬렉션을 만듬
     public function store(\App\Http\Requests\ArticlesRequest $request)
-    {
-        /* $rules = [
-            'title' => ['required'],
-            'content' => ['required', 'min:10'],
-        ];
+    { 
+        $user = $request->user();
 
-        $messages = [
-            'title.required' => '제목은 필수 입력 항목입니다.',
-            'content.required' => '본문은 필수 입력 항목입니다.',
-            'content.min' => '본문은 최소 :min 글자 이상이 필요합니다.',
-        ]; */
-
-        /* $validator = \Validator::make($request->all(), $rules, $messages);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        } */
-        //$this->validate($request, $rules, $messages);
-
-        $article = \App\User::find(1)->articles()->create($request->all());
+        $article = $user->articles()->create($request->getPayload());
 
         if (! $article) {
             return back()->with('flash_massage', '글이 저장되지 않았습니다.')->withInput();
         }
-        
+
+        // 태그 싱크
+        $article->tags()->sync($request->input('tags'));
+
+        // 첨부파일 연결
+        $request->getAttachments()->each(function ($attachment) use ($article) {
+            $attachment->article()->associate($article);
+            $attachment->save();
+        });
+                
         event(new \App\Providers\App\Events\ArticlesEvent($article));
+        event(new \App\Events\ModelChanged(['articles']));
 
-        return redirect(route('articles.index'))->with('flash_message', '작성하신 글이 저장되었습니다.');
+        return $this->respondCreated($article);
     }
     
-    public function show($id)
+    // 기본키를 가진 Article 모델을 조회
+    public function show(\App\Article $article)
     {
-        $article = \App\Article::findOrFail($id);
+        if (! is_api_domain()) {
+            $article->view_count += 1;
+            $article->save();
+        }
+        
+        // 댓글 목록 조회
+        $comments = $article->comments()->with('replies')
+        ->withTrashed()->whereNull('parent_id')->latest()->get();
 
-        return $article->toArray();
+        return $this->respondInstance($article, $comments);
     }
     
-    public function edit($id)
+    // 기본 키를 가진 Article 모델을 수정하기 위한 폼을 담은 뷰를 반환
+    public function edit(\App\Article $article)
     {
-        return __METHOD__ . '은(는) 다음 기본 키를 가진 Article 모델을 수정하기 위한 폼을 담은 뷰를 반환합니다.' . $id;
+        $this->authorize('update', $article);
+
+        return view('articles.edit', compact('article'));
     }
     
-    public function update(Request $request, $id)
+    // 사용자의 입력한 폼 데이터로 다음 기본 키를 가진 Article 모델을 수정
+    public function update(\App\Http\Requests\ArticlesRequest $request, \App\Article $article)
     {
-        return __METHOD__ . '은(는) 사용자의 입력한 폼 데이터로 다음 기본 키를 가진 Article 모델을 수정합니다.' . $id;
+        $this->authorize('update', $article);
+
+        $payload = array_merge($request->all(), [
+            'notification' => $request->has('notification'),
+        ]);
+
+        $article->update($payload);
+        $article->tags()->sync($request->input('tags'));
+
+        event(new \App\Events\ModelChanged(['articles']));
+        flash()->success(
+            trans('forum.articles.success_updating')
+        );
+
+        return $this->respondUpdated($article);
     }
     
-    public function destroy($id)
+    // 기본 키를 가진 Article 모델을 삭제
+    public function destroy(\App\Article $article)
     {
-        return __METHOD__ . '은(는) 다음 기본 키를 가진 Article 모델을 삭제합니다.' .  $id;
+        $this->authorize('delete', $article);
+
+        $this->deleteAttachments($article->attachments);        
+
+        $article->delete();
+
+        event(new \App\Events\ModelChanged(['articles']));
+
+        return response()->json([], 204, [], JSON_PRETTY_PRINT);
+    }
+
+    /* 
+     * --- Response Methods ---
+     */
+
+    protected function respondCollection(LengthAwarePaginator $articles, $cacheKey = null)
+    {
+        return view('articles.index', compact('articles'));
+    }
+
+    protected function respondCreated($article)
+    {
+        flash()->success(
+            trans('forum.articles.success_writing')
+        );
+
+        return redirect(route('articles.show', $article->id));
+    }
+
+    protected function respondInstance(\App\Article $article, Collection $comments)
+    {
+        return view('articles.show', compact('article', 'comments'));
+    }
+
+    protected function respondUpdated(\App\Article $article)
+    {
+        flash()->success(trans('forum.articles.success_updating'));
+
+        return redirect(route('articles.show', $article->id));
     }
 }

@@ -1,0 +1,13 @@
+<h1>
+    {{ $comment->commentable->title}}
+    <small>{{ $comment->user->name }}님이 작성하신 댓글입니다.</small>
+</h1>
+<hr>
+<p>
+    {!! markdown($comment->content) !!}
+    <small>{{ $comment->create_at }}</small>
+</p>
+<hr>
+<footer>
+    본 메일은 {{ config('aap.url') }}에서 보냈습니다.
+</footer>
